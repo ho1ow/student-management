@@ -1,0 +1,46 @@
+  .user-details {
+    background-color: #fff;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .user-details h2 {
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .user-details form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 500px;
+  }
+
+  .user-details label {
+    grid-column: 1 / -1;
+  }
+
+  .user-details input[type="text"],
+  .user-details input[type="email"],
+  .user-details input[type="tel"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .user-details button {
+    grid-column: 1 / -1;
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .user-details button:hover {
+    background-color: #2980b9;
+  }

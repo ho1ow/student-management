@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Users{% endblock %}
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="flashes">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+{% block content %}
+<h2>Users</h2>
+<table>
+  <tr>
+    <th>User name</th>
+    <th>Full name</th>
+    <th>Phone number</th>
+    <th>Role</th>
+    <th>Class</th>
+    <th>Id</th>
+    <th>Session</th>
+    <th>#</th>
+  </tr>
+  {% for user in users %}
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>{{ user.fullname }}</td>
+      <td>{{ user.phone }}</td>
+      <td>{{ user.role }}</td>
+      <td>{{ user.class }}</td>
+      <td>{{ user.id }}</td>
+      <td>{{ ss }}</td>
+      <td>
+        <a href="{{ url_for('user.get_user_by_id', user_id=user.id) }}">Detail</a>
+        {% if g.user.role == 'teacher' %}
+          <button class="delete-button" data-user-id="{{ user.id }}">Delete</button>
+        {% endif %}
+        <button class="message-button" data-user-id="{{ user.id }}">Send a Message</button>
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% if g.user.role == 'teacher'%}
+  <button id="add-student-button">Add Student</button>
+{% endif %}
+
+<div id="user-details"></div>
+<div id="message-modal" style="display: none;">
+  <h2>Send a Message</h2>
+  <form id="send-message-form">
+    <input type="hidden" id="sender_id" name="sender_id" value="{{ gid }}" />
+    <label for="receiver_id">Receiver ID:</label>
+    <input type="text" id="receiver_id" name="receiver_id" readonly />
+    <label for="content">Message:</label>
+    <input type="text" id="content" name="content" required />
+    <button type="submit">Send</button>
+    <button type="button" onclick="document.getElementById('message-modal').style.display='none'">Cancel</button>
+  </form>
+</div>
+
+<div id="add-student-modal" style="display: none;">
+  <h2>Add Student</h2>
+  <form id="add-student-form">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required />
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required />
+    <label for="fullname">Full Name:</label>
+    <input type="text" id="fullname" name="fullname" required />
+    <label for="phone">Phone Number:</label>
+    <input type="tel" id="phone" name="phone" />
+    <label for="class_id">Class ID:</label>
+    <input type="text" id="class_id" name="class_id" />
+    <button type="submit">Add Student</button>
+    <button type="button" onclick="document.getElementById('add-student-modal').style.display='none'">Cancel</button>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const deleteButtons = document.querySelectorAll('.delete-button');
+  const messageButtons = document.querySelectorAll('.message-button');
+  const addStudentButton = document.getElementById('add-student-button');
+
+  deleteButtons.forEach(button => {
+    button.addEventListener('click', function () {
+      const userId = this.getAttribute('data-user-id');
+
+      fetch(`/student/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message === 'delete ok') {
+          alert('User deleted successfully');
+          location.reload();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the user');
+      });
+    });
+  });
+
+  messageButtons.forEach(button => {
+    button.addEventListener('click', function () {
+      const userId = this.getAttribute('data-user-id');
+      document.getElementById('receiver_id').value = userId;
+      document.getElementById('message-modal').style.display = 'block';
+    });
+  });
+
+  addStudentButton.addEventListener('click', function () {
+    document.getElementById('add-student-modal').style.display = 'block';
+  });
+
+  document.getElementById('send-message-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const senderId = document.getElementById('sender_id').value;
+    const receiverId = document.getElementById('receiver_id').value;
+    const content = document.getElementById('content').value;
+
+    fetch('/message/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender_id: senderId,
+        receiver_id: receiverId,
+        content: content
+      }),
+      credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        alert('Message sent successfully');
+        document.getElementById('message-modal').style.display = 'none';
+      } else {
+        alert('Error: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while sending the message');
+    });
+  });
+
+  document.getElementById('add-student-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const fullname = document.getElementById('fullname').value;
+    const phone = document.getElementById('phone').value;
+    const classId = document.getElementById('class_id').value;
+
+    fetch('/student', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password,
+        fullname: fullname,
+        phone: phone,
+        class_id: classId
+      }),
+      credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        alert('Student added successfully');
+        document.getElementById('add-student-modal').style.display = 'none';
+        location.reload();
+      } else {
+        alert('Error: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while adding the student');
+    });
+  });
+});
+</script>
+
+<style>
+  .delete-button, .message-button {
+    color: #2980b9;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+  }
+  .delete-button:hover, .message-button:hover {
+    color: #2980b9;
+  }
+  #message-modal, #add-student-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid #ccc;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+</style>
+{% endblock %}

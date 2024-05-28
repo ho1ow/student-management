@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}View Submissions{% endblock %}
+
+{% block content %}
+  <h1>Submissions for Assignment</h1>
+  {% if g.user.role == 'student' %}
+  <form action="{{ url_for('assignment.submit_assignment', id=assignment_id) }}" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" required />
+    <input type="submit" value="Submit" formnovalidate />
+  </form>
+  {% endif %}
+  <table>
+    <thead>
+      <tr>
+        <th>Submission ID</th>
+        <th>Student ID</th>
+        <th>Submitted At</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for submission in submissions %}
+      <tr>
+        <td>{{ submission.id }}</td>
+        <td>{{ submission.student_id }}</td>
+        <td>{{ submission.created_at }}</td>
+        <td><button class="view-details" data-id="{{ submission.id }}">Details</button></td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4">No submissions found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div id="details-modal" style="display:none;">
+    <h2>Submission Details</h2>
+    <p><strong>Submission ID:</strong> <span id="detail-id"></span></p>
+    <p><strong>Assignment ID:</strong> <span id="detail-assignment-id"></span></p>
+    <p><strong>Student ID:</strong> <span id="detail-student-id"></span></p>
+    <p><strong>Submitted At:</strong> <span id="detail-created-at"></span></p>
+    <button type="button" onclick="document.getElementById('details-modal').style.display='none'">Close</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Handle Details Button Click
+      const detailsButtons = document.querySelectorAll('.view-details');
+      detailsButtons.forEach(button => {
+        button.addEventListener('click', function (event) {
+          event.preventDefault();
+          const submissionId = this.getAttribute('data-id');
+          const assignmentId = {{ assignment_id }};
+          fetch(`/assignment/${assignmentId}/submissions/${submissionId}`)
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('detail-id').textContent = data.id;
+              document.getElementById('detail-assignment-id').textContent = data.assignment_id;
+              document.getElementById('detail-student-id').textContent = data.student_id;
+              document.getElementById('detail-created-at').textContent = data.created_at;
+              document.getElementById('details-modal').style.display = 'block';
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred while fetching the submission details');
+            });
+        });
+      });
+    });
+  </script>
+{% endblock %}

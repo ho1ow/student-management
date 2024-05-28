@@ -1,0 +1,88 @@
+{% extends 'base.html' %} {% block title %}User Details{% endblock %} {% block
+content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/detail.css') }}"
+/>
+
+<div class="user-details">
+  <h2>User Details</h2>
+  <h2>Role: {{ user.role }}</h2>
+  <form id="update-form">
+    <label for="username">Username:</label>
+    <input
+      type="text"
+      id="username"
+      name="username"
+      value="{{ user.username }}"
+    />
+
+    <label for="fullname">Full Name:</label>
+    <input
+      type="text"
+      id="fullname"
+      name="fullname"
+      value="{{ user.fullname }}"
+      readonly
+    />
+
+    <label for="password">Password:</label>
+    <input
+      type="password"
+      id="password"
+      name="password"
+      value="{{ user.password }}"
+      required
+    />
+
+    <label for="phone">Phone Number:</label>
+    <input type="tel" id="phone" name="phone" value="{{ user.phone }}" />
+
+    <label for="class">Class:</label>
+    <input type="text" id="class" name="class" value="{{ user.class }}"  />
+
+    <label for="role">Role:</label>
+    <input type="text" id="role" name="role" value="{{ user.role }}" readonly />
+
+    {% if can_update and user.role != 'teacher' %}
+    <button type="submit">Update Details</button>
+    {% endif %}
+  </form>
+</div>
+
+<script>
+  document
+    .getElementById("update-form")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const phone = document.getElementById("phone").value;
+      const password = document.getElementById("password").value;
+
+      fetch(`/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: phone,
+          password: password,
+        }),
+        credentials: "same-origin",
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.message) {
+            alert("User profile updated successfully");
+          } else {
+            alert("Error: " + data.error);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("An error occurred while updating the user profile");
+        });
+    });
+</script>
+
+{% endblock %}

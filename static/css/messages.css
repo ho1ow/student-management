@@ -1,0 +1,68 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+  }
+  
+  #conversations-container,
+  #messages-container {
+    margin: 20px;
+  }
+  
+  #conversations-list,
+  #messages-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  #conversations-list li,
+  #messages-list div {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #e6f7ff;
+    border: 1px solid #91d5ff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  #conversations-list li:hover,
+  #messages-list div:hover {
+    background-color: #bae7ff;
+  }
+  
+  #conversations-container h2,
+  #messages-container h2 {
+    margin-bottom: 10px;
+    color: #1890ff;
+  }
+  
+  #send-message-form,
+  #edit-message-form {
+    margin: 20px;
+  }
+  
+  #send-message-form input,
+  #edit-message-form input {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #d9d9d9;
+    border-radius: 5px;
+    width: calc(100% - 22px); /* Adjust width for padding */
+  }
+  
+  #send-message-form button,
+  #edit-message-form button {
+    padding: 10px 20px;
+    background-color: #1890ff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  #send-message-form button:hover,
+  #edit-message-form button:hover {
+    background-color: #40a9ff;
+  }
+  

@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Challenges{% endblock %}
+
+{% block content %}
+<h1>List Challenges</h1>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+  <ul class="flashes">
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+{% endwith %}
+
+<form action="{{ url_for('challenge.challenge') }}" method="POST" enctype="multipart/form-data">
+  <label for="file">File:</label>
+  <input type="file" name="file" id="file" required />
+  <label for="hint">Hint:</label>
+  <input type="text" name="hint" id="hint" placeholder="Hint" required />
+  <input type="submit" value="New Challenge" />
+</form>
+<hr />
+<h2>Existing Challenges</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Hint</th>
+      <th>Created By</th>
+      <th>Created On</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for challenge in challenges %}
+    <tr>
+      <td>{{ challenge.hint }}</td>
+      <td>{{ challenge.owner }}</td>
+      <td>{{ challenge.created_at }}</td>
+      <td>
+        <a href="#" class="view-details" data-id="{{ challenge.id }}">Details</a> |
+        <a href="#" class="submit-answer" data-id="{{ challenge.id }}">Submit Answer</a> |
+        <a href="#" class="delete-challenge" data-id="{{ challenge.id }}">Delete</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="4">No challenges found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div id="details-modal" style="display: none">
+  <h2>Challenge Details</h2>
+  <p><strong>Hint:</strong> <span id="details-hint"></span></p>
+  <p><strong>Created By:</strong> <span id="details-owner"></span></p>
+  <p><strong>Created On:</strong> <span id="details-created-at"></span></p>
+  <button type="button" onclick="document.getElementById('details-modal').style.display='none'">Close</button>
+</div>
+
+<div id="submit-answer-form" style="display: none">
+  <h2>Submit Answer</h2>
+  <form id="answer-form">
+    <label for="answertext">Answer:</label>
+    <input type="text" id="answertext" name="answertext" required />
+    <button type="submit">Submit Answer</button>
+    <button type="button" onclick="document.getElementById('submit-answer-form').style.display='none'">Cancel</button>
+  </form>
+  <div id="file-content" style="display: none">
+    <h3>File Content</h3>
+    <pre id="file-content-text"></pre>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const detailsButtons = document.querySelectorAll(".view-details");
+  const submitButtons = document.querySelectorAll(".submit-answer");
+  const deleteButtons = document.querySelectorAll(".delete-challenge");
+
+  detailsButtons.forEach((button) => {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      const challengeId = this.getAttribute("data-id");
+      fetch(`/challenge/${challengeId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById("details-hint").textContent = data.hint;
+          document.getElementById("details-owner").textContent = data.owner;
+          document.getElementById("details-created-at").textContent = data.created_at;
+          document.getElementById("details-modal").style.display = "block";
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("An error occurred while fetching the challenge details");
+        });
+    });
+  });
+
+  submitButtons.forEach((button) => {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      const challengeId = this.getAttribute("data-id");
+      document.getElementById("submit-answer-form").style.display = "block";
+      document.getElementById("answer-form").onsubmit = function (e) {
+        e.preventDefault();
+        const answertext = document.getElementById("answertext").value;
+        fetch(`/challenge/${challengeId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            answertext: answertext,
+          }),
+          credentials: "same-origin",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message === "Correct answer") {
+              alert("Correct answer");
+              document.getElementById("file-content-text").textContent = data.content;
+              document.getElementById("file-content").style.display = "block";
+            } else {
+              alert("Incorrect answer: " + data.answer);
+              document.getElementById("file-content").style.display = "none";
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while submitting the answer");
+          });
+      };
+    });
+  });
+
+  deleteButtons.forEach((button) => {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      const challengeId = this.getAttribute("data-id");
+      if (confirm("Are you sure you want to delete this challenge?")) {
+        fetch(`/challenge/${challengeId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "same-origin",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message === "Challenge deleted successfully") {
+              alert("Challenge deleted successfully");
+              location.reload();
+            } else {
+              alert("Error: " + data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while deleting the challenge");
+          });
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

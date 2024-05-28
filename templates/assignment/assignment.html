@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Assignments{% endblock %}
+
+{% block content %}
+<h1>List Assignments</h1>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+  <ul class="flashes">
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+{% endwith %}
+
+<form action="{{ url_for('assignment.add_assignment') }}" method="POST" enctype="multipart/form-data">
+  <label for="title">Title:</label>
+  <input type="text" name="title" id="title" required />
+  <label for="description">Description:</label>
+  <input type="text" name="description" id="description" required />
+  <label for="file">File:</label>
+  <input type="file" name="file" id="file" required />
+  <input type="submit" value="New" />
+</form>
+<hr />
+<h2>Existing Assignments</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Description</th>
+      <th>Uploaded By</th>
+      <th>Uploaded On</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for assignment in assignments %}
+    <tr>
+      <td>{{ assignment.title }}</td>
+      <td>{{ assignment.description }}</td>
+      <td>{{ teacher_name }}</td>
+      <td>{{ assignment.created_at }}</td>
+      <td>
+        <a href="{{ url_for('assignment.view_submissions', id=assignment.id) }}">View Submissions</a> |
+        <a href="#" class="view-assignment" data-id="{{ assignment.id }}">View File</a> |
+        <a href="#" class="edit-assignment" data-id="{{ assignment.id }}">Edit</a> |
+        <a href="#" class="delete-assignment" data-id="{{ assignment.id }}">Delete</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="5">No assignments found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div id="assignment-details" style="display: none">
+  <h2>Assignment Details</h2>
+  <div id="assignment-info"></div>
+  <button type="button" onclick="document.getElementById('assignment-details').style.display='none'">Close</button>
+</div>
+
+<div id="edit-assignment-form" style="display: none">
+  <h2>Edit Assignment</h2>
+  <form id="edit-form">
+    <label for="edit-title">Title:</label>
+    <input type="text" id="edit-title" name="title" required />
+    <label for="edit-description">Description:</label>
+    <input type="text" id="edit-description" name="description" required />
+    <button type="submit">Update Assignment</button>
+    <button type="button" onclick="document.getElementById('edit-assignment-form').style.display='none'">Cancel</button>
+  </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const viewButtons = document.querySelectorAll(".view-assignment");
+  viewButtons.forEach((button) => {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      const assignmentId = this.getAttribute("data-id");
+      fetch(`/assignment/${assignmentId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          const assignmentInfo = `
+            <p><strong>Title:</strong> ${data.title}</p>
+            <p><strong>Description:</strong> ${data.description}</p>
+            <p><strong>Uploaded By:</strong> ${data.teacher_name}</p>
+            <p><strong>Uploaded On:</strong> ${data.created_at}</p>
+            <p><strong>Content:</strong></p>
+            <pre>${data.content}</pre>
+          `;
+          document.getElementById("assignment-info").innerHTML = assignmentInfo;
+          document.getElementById("assignment-details").style.display = "block";
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("An error occurred while fetching the assignment details");
+        });
+    });
+  });
+
+  const editButtons = document.querySelectorAll(".edit-assignment");
+  editButtons.forEach((button) => {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      const assignmentId = this.getAttribute("data-id");
+      fetch(`/assignment/${assignmentId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById("edit-title").value = data.title;
+          document.getElementById("edit-description").value = data.description;
+          document.getElementById("edit-assignment-form").style.display = "block";
+          document.getElementById("edit-form").onsubmit = function (e) {
+            e.preventDefault();
+            const title = document.getElementById("edit-title").value;
+            const description = document.getElementById("edit-description").value;
+            fetch(`/assignment/${assignmentId}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                title: title,
+                description: description
+              }),
+              credentials: "same-origin",
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.message) {
+                  alert("Assignment updated successfully");
+                  location.reload();
+                } else {
+                  alert("Error: " + data.error);
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while updating the assignment");
+              });
+          };
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("An error occurred while fetching the assignment details");
+        });
+    });
+  });
+
+  const deleteButtons = document.querySelectorAll(".delete-assignment");
+  deleteButtons.forEach((button) => {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      const assignmentId = this.getAttribute("data-id");
+      if (confirm("Are you sure you want to delete this assignment?")) {
+        fetch(`/assignment/${assignmentId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "same-origin",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message) {
+              alert("Assignment deleted successfully");
+              location.reload();
+            } else {
+              alert("Error: " + data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while deleting the assignment");
+          });
+      }
+    });
+  });
+});
+</script>
+
+{% endblock %}
