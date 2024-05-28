@@ -155,17 +155,23 @@ def edit_student(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": f"User with id {user_id} not found"}), 404
-    # if user.role == RoleEnum.teacher.value:
-    #     return jsonify({"error": "You cannot edit teacher"}), 400
+    
     try:
+        # Update user details
         user.username = request.json.get('username', user.username)
-        user.password = generate_password_hash(request.json.get('password', user.password))
+        password = request.json.get('password')
+        if password:
+            user.password = generate_password_hash(password)
         user.fullname = request.json.get('fullname', user.fullname)
         user.phone = request.json.get('phone', user.phone)
-        db.session.commit()
-        
+
+        # Update student details
         student = Student.query.filter_by(user_id=user.id).first()
-        student.class_id = request.json.get('class_id', student.class_id)
+        if student:
+            student.class_id = request.json.get('class_id', student.class_id)
+        else:
+            return jsonify({"error": "Student details not found"}), 404
+        
         db.session.commit()
 
         return jsonify({"message": "Student updated successfully"}), 200
@@ -173,6 +179,7 @@ def edit_student(user_id):
         db.session.rollback()
         logging.error(f"Error in edit_student: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 
 @bp.route('/student/<int:user_id>', methods=['DELETE'])

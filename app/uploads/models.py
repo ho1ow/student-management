@@ -77,15 +77,15 @@ class Message(db.Model):
 class Submission(db.Model):
     __tablename__ = 'submissions'
     id = db.Column(db.Integer, primary_key=True)
-    assignment_id = db.Column(db.Integer, db.ForeignKey(
-        'assignments.id'), nullable=False)
-    student_id = db.Column(
-        db.Integer, db.ForeignKey('students.id'), nullable=False)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    assignment_id = db.Column(db.Integer, db.ForeignKey('assignments.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    file_url = db.Column(db.String())
+    created_at = db.Column(db.DateTime, default=db.func.now())
 
-    def __init__(self, assignment_id, student_id):
+    def __init__(self, assignment_id, student_id, file_url):
         self.assignment_id = assignment_id
         self.student_id = student_id
+        self.file_url = file_url
 
 
 class Challenge(db.Model):

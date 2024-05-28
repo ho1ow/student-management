@@ -14,6 +14,7 @@
   {% endif %}
 {% endwith %}
 
+{% if g.user.role == 'teacher' %}
 <form action="{{ url_for('assignment.add_assignment') }}" method="POST" enctype="multipart/form-data">
   <label for="title">Title:</label>
   <input type="text" name="title" id="title" required />
@@ -24,6 +25,8 @@
   <input type="submit" value="New" />
 </form>
 <hr />
+{% endif %}
+
 <h2>Existing Assignments</h2>
 <table>
   <thead>
@@ -43,10 +46,14 @@
       <td>{{ teacher_name }}</td>
       <td>{{ assignment.created_at }}</td>
       <td>
-        <a href="{{ url_for('assignment.view_submissions', id=assignment.id) }}">View Submissions</a> |
         <a href="#" class="view-assignment" data-id="{{ assignment.id }}">View File</a> |
+        {% if g.user.role == 'teacher' %}
+        <a href="{{ url_for('assignment.view_submissions', id=assignment.id) }}">View Submissions</a> |
         <a href="#" class="edit-assignment" data-id="{{ assignment.id }}">Edit</a> |
         <a href="#" class="delete-assignment" data-id="{{ assignment.id }}">Delete</a>
+        {% else %}
+        <a href="#" class="submit-assignment" data-id="{{ assignment.id }}">Submit Assignment</a>
+        {% endif %}
       </td>
     </tr>
     {% else %}
@@ -75,6 +82,16 @@
   </form>
 </div>
 
+<div id="submit-assignment-form" style="display: none">
+  <h2>Submit Assignment</h2>
+  <form id="submit-form" enctype="multipart/form-data">
+    <label for="submission-file">File:</label>
+    <input type="file" id="submission-file" name="file" required />
+    <button type="submit">Submit</button>
+    <button type="button" onclick="document.getElementById('submit-assignment-form').style.display='none'">Cancel</button>
+  </form>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const viewButtons = document.querySelectorAll(".view-assignment");
@@ -100,6 +117,38 @@ document.addEventListener("DOMContentLoaded", function () {
           console.error("Error:", error);
           alert("An error occurred while fetching the assignment details");
         });
+    });
+  });
+
+  const submitButtons = document.querySelectorAll(".submit-assignment");
+  submitButtons.forEach((button) => {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      const assignmentId = this.getAttribute("data-id");
+      document.getElementById("submit-assignment-form").style.display = "block";
+      document.getElementById("submit-form").onsubmit = function (e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("file", document.getElementById("submission-file").files[0]);
+        fetch(`/assignment/${assignmentId}/submit`, {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message) {
+              alert("Assignment submitted successfully");
+              location.reload();
+            } else {
+              alert("Error: " + data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while submitting the assignment");
+          });
+      };
     });
   });
 
