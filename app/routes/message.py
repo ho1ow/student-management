@@ -36,17 +36,20 @@ def messages():
 @bp.route('/conversations', methods=['GET'])
 def get_conversations():
     try:
-        conversations = db.session.query(Message.sender_id, Message.receiver_id).distinct().all()
+        user_id = session.get('user_id')
+        sent_messages = db.session.query(Message.receiver_id).filter(Message.sender_id == user_id).distinct()
+        received_messages = db.session.query(Message.sender_id).filter(Message.receiver_id == user_id).distinct()
+        conversation_user_ids = sent_messages.union(received_messages).all()
         conversation_users = []
-        for conv in conversations:
-            sender = User.query.get(conv.sender_id)
-            receiver = User.query.get(conv.receiver_id)
+
+        for user_id_tuple in conversation_user_ids:
+            other_user_id = user_id_tuple[0]
+            other_user = User.query.get(other_user_id)
             conversation_users.append({
-                "sender_id": sender.id,
-                "sender_username": sender.username,
-                "receiver_id": receiver.id,
-                "receiver_username": receiver.username
+                "user_id": other_user.id,
+                "username": other_user.username
             })
+
         return jsonify(conversation_users), 200
     except Exception as e:
         logging.error(f"Error retrieving conversations: {e}")

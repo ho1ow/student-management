@@ -13,7 +13,8 @@
 {% endwith %}
 
 {% block content %}
-<h2>Users</h2>
+<h2>Users: {{session['user_id']}}</h2>
+
 <table>
   <tr>
     <th>User name</th>
@@ -22,7 +23,6 @@
     <th>Role</th>
     <th>Class</th>
     <th>Id</th>
-    <th>Session</th>
     <th>#</th>
   </tr>
   {% for user in users %}
@@ -33,7 +33,6 @@
       <td>{{ user.role }}</td>
       <td>{{ user.class }}</td>
       <td>{{ user.id }}</td>
-      <td>{{ ss }}</td>
       <td>
         <a href="{{ url_for('user.get_user_by_id', user_id=user.id) }}">Detail</a>
         {% if g.user.role == 'teacher' %}
@@ -52,7 +51,7 @@
 <div id="message-modal" style="display: none;">
   <h2>Send a Message</h2>
   <form id="send-message-form">
-    <input type="hidden" id="sender_id" name="sender_id" value="{{ gid }}" />
+    <input type="hidden" id="sender_id" name="sender_id" value="{{ session['user_id'] }}" />
     <label for="receiver_id">Receiver ID:</label>
     <input type="text" id="receiver_id" name="receiver_id" readonly />
     <label for="content">Message:</label>
@@ -80,13 +79,46 @@
   </form>
 </div>
 
+<style>
+  .delete-button, .message-button {
+    color: #2980b9;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+  }
+  .delete-button:hover, .message-button:hover {
+    color: #2980b9;
+  }
+  #message-modal, #add-student-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid #ccc;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const deleteButtons = document.querySelectorAll('.delete-button');
   const messageButtons = document.querySelectorAll('.message-button');
   const addStudentButton = document.getElementById('add-student-button');
+  
+  console.log('Delete Buttons:', deleteButtons);
+  console.log('Message Buttons:', messageButtons);
+  console.log('Add Student Button:', addStudentButton);
 
   deleteButtons.forEach(button => {
+    if (button === null) {
+      console.error('Delete button not found in DOM');
+      return;
+    }
     button.addEventListener('click', function () {
       const userId = this.getAttribute('data-user-id');
 
@@ -99,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .then(response => response.json())
       .then(data => {
-        if (data.message === 'delete ok') {
+        if (data.message === 'Message deleted successfully') {
           alert('User deleted successfully');
           location.reload();
         } else {
@@ -114,6 +146,10 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   messageButtons.forEach(button => {
+    if (button === null) {
+      console.error('Message button not found in DOM');
+      return;
+    }
     button.addEventListener('click', function () {
       const userId = this.getAttribute('data-user-id');
       document.getElementById('receiver_id').value = userId;
@@ -121,9 +157,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  addStudentButton.addEventListener('click', function () {
-    document.getElementById('add-student-modal').style.display = 'block';
-  });
+  if (addStudentButton === null) {
+    console.error('Add student button not found in DOM');
+  } else {
+    addStudentButton.addEventListener('click', function () {
+      document.getElementById('add-student-modal').style.display = 'block';
+    });
+  }
 
   document.getElementById('send-message-form').addEventListener('submit', function (event) {
     event.preventDefault();
@@ -145,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .then(response => response.json())
     .then(data => {
-      if (data.message) {
+      if (data.message === 'Message sent successfully') {
         alert('Message sent successfully');
         document.getElementById('message-modal').style.display = 'none';
       } else {
@@ -182,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .then(response => response.json())
     .then(data => {
-      if (data.message) {
+      if (data.message === 'Student added successfully') {
         alert('Student added successfully');
         document.getElementById('add-student-modal').style.display = 'none';
         location.reload();
@@ -197,29 +237,4 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
-
-<style>
-  .delete-button, .message-button {
-    color: #2980b9;
-    text-decoration: underline;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
-    font: inherit;
-  }
-  .delete-button:hover, .message-button:hover {
-    color: #2980b9;
-  }
-  #message-modal, #add-student-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border: 1px solid #ccc;
-    padding: 20px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  }
-</style>
 {% endblock %}

@@ -1,7 +1,5 @@
 import enum
-from sqlalchemy.dialects.postgresql import JSON
 from .db import db
-from sqlalchemy import insert
 
 
 class RoleEnum(enum.Enum):

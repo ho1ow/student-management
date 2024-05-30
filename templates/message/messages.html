@@ -250,20 +250,15 @@
         .then((data) => {
           const conversationsList = document.getElementById('conversations-list');
           conversationsList.innerHTML = '';
-          const uniqueConversations = new Set();
           data.forEach((conv) => {
-            const conversationKey = `${conv.sender_id}-${conv.receiver_id}`;
-            if (!uniqueConversations.has(conversationKey)) {
-              uniqueConversations.add(conversationKey);
-              const conversationElement = document.createElement('li');
-              conversationElement.textContent = `${conv.sender_username} (ID: ${conv.sender_id}) ↔ ${conv.receiver_username} (ID: ${conv.receiver_id})`;
-              conversationElement.addEventListener('click', function () {
-                currentReceiverId = conv.receiver_id === currentSenderId ? conv.sender_id : conv.receiver_id;
-                fetchMessages(currentSenderId, currentReceiverId);
-                document.getElementById('receiver_id').value = currentReceiverId;
-              });
-              conversationsList.appendChild(conversationElement);
-            }
+            const conversationElement = document.createElement('li');
+            conversationElement.textContent = `${conv.username} (ID: ${conv.user_id})`;
+            conversationElement.addEventListener('click', function () {
+              currentReceiverId = conv.user_id;
+              fetchMessages(currentSenderId, currentReceiverId);
+              document.getElementById('receiver_id').value = currentReceiverId;
+            });
+            conversationsList.appendChild(conversationElement);
           });
         })
         .catch((error) => {
@@ -377,7 +372,6 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sender_id: senderId,
           receiver_id: receiverId,
           content: content,
         }),
