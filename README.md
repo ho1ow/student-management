@@ -6,4 +6,6 @@ docker-compose up --build
 ```
 
 Web: http://localhost:5000
-
+Test account: 
+- Teacher: ok22:ok
+- Student: 1ok:ok

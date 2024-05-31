@@ -155,7 +155,7 @@ def edit_student(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": f"User with id {user_id} not found"}), 404
-    
+
     try:
         # Update user details
         user.username = request.json.get('username', user.username)
@@ -171,7 +171,7 @@ def edit_student(user_id):
             student.class_id = request.json.get('class_id', student.class_id)
         else:
             return jsonify({"error": "Student details not found"}), 404
-        
+
         db.session.commit()
 
         return jsonify({"message": "Student updated successfully"}), 200
@@ -179,7 +179,6 @@ def edit_student(user_id):
         db.session.rollback()
         logging.error(f"Error in edit_student: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
 
 
 @bp.route('/student/<int:user_id>', methods=['DELETE'])
@@ -192,7 +191,7 @@ def delete_student(user_id):
         student = Student.query.filter_by(user_id=user_id).first()
         if student:
             db.session.delete(student)
-        
+
         db.session.delete(user)
         db.session.commit()
         return jsonify({"message": "delete ok"}), 200
@@ -201,3 +200,19 @@ def delete_student(user_id):
         logging.error(f"Error in delete_student: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+
+@bp.route('class', methods=['POST'])
+def get_class():
+    try:
+        logging.debug(f"request.json: {request.json}")
+        class_name = request.json.get('class_name')
+        uid = request.json.get('teacher_id')
+        teacher_id = Teacher.query.filter_by(user_id=uid).first().id
+        class_ = Class(class_name=class_name, teacher_id=teacher_id)
+        db.session.add(class_)
+        db.session.commit()
+        return jsonify({"message": "Class added successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error in add_class: {str(e)}")
+        return jsonify({"error": str(e)}), 500

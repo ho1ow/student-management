@@ -70,7 +70,8 @@ def list_challenges():
     try:
         challenges = Challenge.query.all()
         if not challenges:
-            return jsonify({"message": "No challenges found"}), 200
+            # return jsonify({"message": "No challenges found"}), 200
+            return render_template('challenge/challenge.html', challenges=[])
         challenge_data = [{
             "id": challenge.id,
             "hint": challenge.hint,
@@ -107,7 +108,7 @@ def get_challenge_details(challenge):
 
 def delete_challenge(challenge):
     uid = session.get('user_id')
-    teacher_id=Teacher.query.filter_by(user_id=uid).first().id
+    teacher_id = Teacher.query.filter_by(user_id=uid).first().id
     if teacher_id != Challenge.query.get(challenge.id).created_by:
         return jsonify({"error": "You are not authorized to delete this challenge"}), 403
     try:

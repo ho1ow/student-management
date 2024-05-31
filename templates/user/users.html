@@ -13,7 +13,7 @@
 {% endwith %}
 
 {% block content %}
-<h2>Users: {{session['user_id']}}</h2>
+<h2>Users: {{ session['user_id'] }}</h2>
 
 <table>
   <tr>
@@ -45,6 +45,7 @@
 </table>
 {% if g.user.role == 'teacher'%}
   <button id="add-student-button">Add Student</button>
+  <button id="create-class-button">Create Class</button>
 {% endif %}
 
 <div id="user-details"></div>
@@ -79,6 +80,18 @@
   </form>
 </div>
 
+<div id="create-class-modal" style="display: none;">
+  <h2>Create Class</h2>
+  <form id="create-class-form">
+    <label for="class_name">Class Name:</label>
+    <input type="text" id="class_name" name="class_name" required />
+    <label for="teacher_id">Teacher ID:</label>
+    <input type="text" id="teacher_id" name="teacher_id" readonly value="{{ session['user_id'] }}" />
+    <button type="submit">Create Class</button>
+    <button type="button" onclick="document.getElementById('create-class-modal').style.display='none'">Cancel</button>
+  </form>
+</div>
+
 <style>
   .delete-button, .message-button {
     color: #2980b9;
@@ -92,7 +105,7 @@
   .delete-button:hover, .message-button:hover {
     color: #2980b9;
   }
-  #message-modal, #add-student-modal {
+  #message-modal, #add-student-modal, #create-class-modal {
     position: fixed;
     top: 50%;
     left: 50%;
@@ -109,19 +122,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const deleteButtons = document.querySelectorAll('.delete-button');
   const messageButtons = document.querySelectorAll('.message-button');
   const addStudentButton = document.getElementById('add-student-button');
-  
-  console.log('Delete Buttons:', deleteButtons);
-  console.log('Message Buttons:', messageButtons);
-  console.log('Add Student Button:', addStudentButton);
+  const createClassButton = document.getElementById('create-class-button');
 
   deleteButtons.forEach(button => {
-    if (button === null) {
-      console.error('Delete button not found in DOM');
-      return;
-    }
     button.addEventListener('click', function () {
       const userId = this.getAttribute('data-user-id');
-
       fetch(`/student/${userId}`, {
         method: 'DELETE',
         headers: {
@@ -131,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .then(response => response.json())
       .then(data => {
-        if (data.message === 'Message deleted successfully') {
+        if (data.message === 'User deleted successfully') {
           alert('User deleted successfully');
           location.reload();
         } else {
@@ -146,10 +151,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   messageButtons.forEach(button => {
-    if (button === null) {
-      console.error('Message button not found in DOM');
-      return;
-    }
     button.addEventListener('click', function () {
       const userId = this.getAttribute('data-user-id');
       document.getElementById('receiver_id').value = userId;
@@ -157,11 +158,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  if (addStudentButton === null) {
-    console.error('Add student button not found in DOM');
-  } else {
+  if (addStudentButton !== null) {
     addStudentButton.addEventListener('click', function () {
       document.getElementById('add-student-modal').style.display = 'block';
+    });
+  }
+
+  if (createClassButton !== null) {
+    createClassButton.addEventListener('click', function () {
+      document.getElementById('create-class-modal').style.display = 'block';
     });
   }
 
@@ -187,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
     .then(data => {
       if (data.message === 'Message sent successfully') {
         alert('Message sent successfully');
-        document.getElementById('message-modal').style.display = 'none';
+        document.getElementById('message-modal').style.display='none';
       } else {
         alert('Error: ' + data.error);
       }
@@ -224,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
     .then(data => {
       if (data.message === 'Student added successfully') {
         alert('Student added successfully');
-        document.getElementById('add-student-modal').style.display = 'none';
+        document.getElementById('add-student-modal').style.display='none';
         location.reload();
       } else {
         alert('Error: ' + data.error);
@@ -233,6 +238,38 @@ document.addEventListener('DOMContentLoaded', function () {
     .catch(error => {
       console.error('Error:', error);
       alert('An error occurred while adding the student');
+    });
+  });
+
+  document.getElementById('create-class-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const className = document.getElementById('class_name').value;
+    const teacherId = document.getElementById('teacher_id').value;
+
+    fetch('/class', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        class_name: className,
+        teacher_id: teacherId
+      }),
+      credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message === 'Class added successfully') {
+        alert('Class added successfully');
+        document.getElementById('create-class-modal').style.display='none';
+        location.reload(); // Refresh the page to see the new class
+      } else {
+        alert('Error: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while creating the class');
     });
   });
 });
