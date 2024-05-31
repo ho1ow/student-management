@@ -12,6 +12,12 @@ CREATE TABLE "users" (
   "role" "user_role" NOT NULL,
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT (now())
 );
+CREATE TABLE "teachers" (
+  "id" BIGSERIAL PRIMARY KEY,
+  "user_id" BIGINT UNIQUE,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT (now()),
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
+);
 
 CREATE TABLE "class" (
   "id" BIGSERIAL PRIMARY KEY,
@@ -29,12 +35,7 @@ CREATE TABLE "students" (
   FOREIGN KEY ("class_id") REFERENCES "class" ("id")
 );
 
-CREATE TABLE "teachers" (
-  "id" BIGSERIAL PRIMARY KEY,
-  "user_id" BIGINT UNIQUE,
-  "created_at" TIMESTAMPTZ NOT NULL DEFAULT (now()),
-  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
-);
+
 
 CREATE TABLE "assignments" (
   "id" BIGSERIAL PRIMARY KEY,
