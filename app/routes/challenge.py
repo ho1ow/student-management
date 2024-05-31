@@ -17,6 +17,8 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
     return True
 
+if not os.path.exists(CHALLENGE_FOLDER):
+    os.makedirs(CHALLENGE_FOLDER)
 
 @bp.route('/', methods=['GET', 'POST'])
 def challenge():

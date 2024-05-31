@@ -14,6 +14,11 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'py'}
 ASSIGNMENT_FOLDER = os.path.join(UPLOAD_FOLDER, 'assignment')
 SUBMISSION_FOLDER = os.path.join(UPLOAD_FOLDER, 'submission')
 
+if not os.path.exists(ASSIGNMENT_FOLDER):
+    os.makedirs(ASSIGNMENT_FOLDER)
+if not os.path.exists(SUBMISSION_FOLDER):
+    os.makedirs(SUBMISSION_FOLDER)
+
 
 def allowed_file(filename):
     # return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -119,7 +124,8 @@ def add_assignment():
 def view_assignment(id):
     assignment = Assignment.query.get(id)
     content = read_file_content(assignment.file_url)
-    teacher_name = db.session.query(User.fullname).join(Teacher, Teacher.user_id == User.id).filter(Teacher.id == assignment.teacher_id).first()
+    teacher_name = db.session.query(User.fullname).join(
+        Teacher, Teacher.user_id == User.id).filter(Teacher.id == assignment.teacher_id).first()
     teacher_name = teacher_name[0] if teacher_name else "Unknown"
 
     assignment_data = {
