@@ -7,7 +7,7 @@ from ..models import Challenge, Teacher, User
 from ..services.autho import role_required
 from app import UPLOAD_FOLDER
 CHALLENGE_FOLDER = os.path.join(UPLOAD_FOLDER, 'challenge')
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'txt'}
 
 bp = Blueprint('challenge', __name__, url_prefix='/challenge')
 
@@ -17,8 +17,10 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
     return True
 
+
 if not os.path.exists(CHALLENGE_FOLDER):
     os.makedirs(CHALLENGE_FOLDER)
+
 
 @bp.route('/', methods=['GET', 'POST'])
 def challenge():
@@ -130,19 +132,19 @@ def submit_challenge_answer(challenge):
         return jsonify({"error": "Answer text is required"}), 400
 
     try:
-        # Get the filename without extension
-        filename = challenge.challenge_url.split('/')[-1].split('.')[0]
-        if answer == filename:
-            try:
-                # Read the file content
-                with open(challenge.challenge_url, 'r') as file:
-                    content = file.read()
-                return jsonify({"message": "Correct answer", "content": content}), 200
-            except Exception as e:
-                logging.error(f'Error reading file content: {str(e)}')
-                return jsonify({"error": f"Error reading file content: {str(e)}"}), 500
-        else:
+        filelist = [file.split(".")[0]
+                    for file in os.listdir(CHALLENGE_FOLDER)]
+        if answer not in filelist:
             return jsonify({"message": "Incorrect answer", "answer": filename}), 200
+        try:
+            filename = os.path.join(CHALLENGE_FOLDER, answer + '.txt')
+            with open(filename, 'r') as file:
+                content = file.read()
+            return jsonify({"message": "Correct answer", "content": content}), 200
+        except Exception as e:
+            logging.error(f'Error reading file content: {str(e)}')
+            return jsonify({"error": f"Error reading file content: {str(e)}"}), 500
+
     except Exception as e:
         logging.error(f'Error checking answer: {str(e)}')
         return jsonify({"error": str(e)}), 500
